@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM 與 RAG 深入解析：提升 AI 回答的準確性與時效性</title>
+    <!-- 引入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定義字體為 Inter */
+        body { font-family: 'Inter', sans-serif; }
+        /* 隱藏捲軸但允許捲動 */
+        ::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased leading-normal">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-screen-xl">
+        <!-- 標題區塊 -->
+        <header class="text-center mb-10 mt-6">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-blue-800 mb-4 rounded-lg bg-white p-4 shadow-lg">
+                LLM 與 RAG 深入解析
+            </h1>
+            <p class="text-xl sm:text-2xl text-gray-600 font-medium">
+                提升 AI 回答的準確性與時效性
+            </p>
+        </header>
+
+        <!-- 導言區塊 -->
+        <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-blue-100">
+            <h2 class="text-3xl font-bold text-blue-700 mb-4">AI 模型回答問題的兩種方式</h2>
+            <p class="text-lg text-gray-700 leading-relaxed">
+                在大型語言模型 (LLM) 的世界裡，它們如何獲取並生成答案是一個核心問題。我們將探討兩種主要的方式：純粹依賴訓練資料的 LLM，以及結合外部知識庫的「檢索增強生成 (RAG)」模型。理解它們的差異，能幫助我們更好地選擇和應用 AI 技術。
+            </p>
+        </section>
+
+        <!-- 新增 1：開場懸念（反常識提問） -->
+        <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-violet-200">
+          <h2 class="text-3xl font-bold text-violet-700 mb-4">誰規定「只有重訓的 LLM」才算聰明？</h2>
+          <p class="text-lg text-gray-700 leading-relaxed">
+            在影像史與 AI 史上，常常不是「畫質/參數最高」的贏，而是「<span class="font-semibold text-violet-700">最常用得到、更新最方便</span>」的贏。RAG 的崛起，就是這種逆襲。
+          </p>
+          <div class="mt-4 text-sm text-gray-500">想一想：為什麼「會查資料的模型」會比「只靠記憶的模型」更能打？</div>
+        </section>
+
+        <!-- 新增 2：四幕劇（迭代敘事） -->
+        <section class="bg-gradient-to-br from-gray-50 to-blue-50 p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-blue-200">
+          <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">AI 回答的四幕劇：從只靠記憶，到會查資料</h2>
+          <div class="grid md:grid-cols-4 gap-4">
+            <div class="bg-white rounded-xl p-5 border border-gray-200">
+              <h3 class="text-xl font-semibold text-gray-800">第一幕：人腦＆規則</h3>
+              <p class="text-gray-600 text-sm mt-2">手寫規則、更新慢、維護成本高。</p>
+            </div>
+            <div class="bg-white rounded-xl p-5 border border-gray-200">
+              <h3 class="text-xl font-semibold text-gray-800">第二幕：純 LLM</h3>
+              <p class="text-gray-600 text-sm mt-2">訓練語料強記憶，但對新知鈍、偶有幻覺。</p>
+            </div>
+            <div class="bg-white rounded-xl p-5 border border-gray-200">
+              <h3 class="text-xl font-semibold text-gray-800">第三幕：RAG</h3>
+              <p class="text-gray-600 text-sm mt-2">先檢索後生成，像 OTA 一樣即時更新。</p>
+            </div>
+            <div class="bg-white rounded-xl p-5 border border-gray-200">
+              <h3 class="text-xl font-semibold text-gray-800">第四幕：代理＋工具</h3>
+              <p class="text-gray-600 text-sm mt-2">會查、會看、會算、會執行，與系統閉環。</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-500 mt-4">就像手繪→膠片→數碼→手機：<span class="font-medium">不是畫質贏，而是「更容易拍到」贏</span>。</p>
+        </section>
+
+        <!-- 新增 3：反常識對比（純 LLM vs RAG） -->
+        <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-rose-200">
+          <h2 class="text-3xl font-bold text-rose-700 mb-4">不是最強，而是最常「用得到」</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-rose-50 rounded-xl p-5 border border-rose-100">
+              <h3 class="text-xl font-semibold text-rose-800">純 LLM（像高階相機）</h3>
+              <ul class="list-disc list-inside text-gray-700 mt-2 space-y-2 text-sm">
+                <li>離線記憶很強，但遇到新資料需重訓。</li>
+                <li>資料缺口可能導致幻覺。</li>
+                <li>畫質高，不一定隨身用得到。</li>
+              </ul>
+            </div>
+            <div class="bg-teal-50 rounded-xl p-5 border border-teal-100">
+              <h3 class="text-xl font-semibold text-teal-800">RAG（像手機）</h3>
+              <ul class="list-disc list-inside text-gray-700 mt-2 space-y-2 text-sm">
+                <li>即時查資料，更新像 OTA 一樣快。</li>
+                <li>能附來源，可信度更高。</li>
+                <li>不一定最「尖」，卻最常「拍得到」。</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 新增 4：情境案例（同題兩解） -->
+        <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-amber-200">
+          <h2 class="text-3xl font-bold text-amber-700 mb-4">同一題，兩種系統的不同命運</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="rounded-xl p-5 border border-gray-200">
+              <h3 class="text-xl font-semibold text-gray-800">問題：引用一週內的新政策</h3>
+              <p class="text-gray-700 text-sm mt-2">純 LLM：不確定是否在語料內 → 可能答非所問或過時。</p>
+              <p class="text-gray-700 text-sm">RAG：檢索政府網站、比對時間戳、產出答案＋來源。</p>
+            </div>
+            <div class="rounded-xl p-5 border border-gray-200">
+              <h3 class="text-xl font-semibold text-gray-800">問題：公司內規與 SOP</h3>
+              <p class="text-gray-700 text-sm mt-2">純 LLM：無法得知內部文件細節。</p>
+              <p class="text-gray-700 text-sm">RAG：搜尋知識庫（Confluence / Drive），回答並附連結。</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-500 mt-4">可搭配下方互動模組，實測純 LLM 與 RAG 的回應差異。</p>
+        </section>
+
+        <!-- 新增 5：痛點 × 解法 -->
+        <section class="bg-blue-50 p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-blue-200">
+          <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">痛點 × RAG 解法</h2>
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <div class="bg-white rounded-xl p-5 border border-gray-200">
+              <h3 class="font-semibold text-gray-800">新知更新慢</h3>
+              <p class="text-gray-600 mt-1">→ 更新索引即可，無需重訓；像 OTA。</p>
+            </div>
+            <div class="bg-white rounded-xl p-5 border border-gray-200">
+              <h3 class="font-semibold text-gray-800">幻覺與風險</h3>
+              <p class="text-gray-600 mt-1">→ 檢索原文、回覆附來源，可審核。</p>
+            </div>
+            <div class="bg-white rounded-xl p-5 border border-gray-200">
+              <h3 class="font-semibold text-gray-800">成本與客製化</h3>
+              <p class="text-gray-600 mt-1">→ 維護知識庫即可，針對領域快速擴充。</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 新增 6：情感連結＋CTA -->
+        <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-emerald-200">
+          <h2 class="text-3xl font-bold text-emerald-700 mb-4">把「你的現場知識」放進來</h2>
+          <p class="text-lg text-gray-700">讓 RAG 起飛的關鍵，不是模型更大，而是：<span class="font-semibold">把日常文件、流程、決策依據</span>變成可檢索的知識。</p>
+          <div class="mt-4">
+            <button id="ctaUpload" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow">
+              📁 匯入一份範例文件，看看回答如何「貼近你」
+            </button>
+            <p class="text-sm text-gray-500 mt-2">（示意）可接到實際上傳流程或彈出教學。</p>
+          </div>
+        </section>
+
+        <!-- 新增 7：小互動—知識庫 OTA 視覺進度 -->
+        <section class="bg-slate-50 p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-slate-200">
+          <h2 class="text-2xl font-bold text-slate-700 mb-4">小互動：知識庫 OTA 更新示意</h2>
+          <div class="flex items-center gap-4">
+            <button id="otaBtn" class="bg-slate-800 text-white rounded-xl px-5 py-3 font-semibold">Push 更新</button>
+            <div class="flex-1 h-3 bg-slate-200 rounded-full overflow-hidden">
+              <div id="otaBar" class="h-full w-0 bg-gradient-to-r from-green-500 to-blue-500"></div>
+            </div>
+            <span id="otaText" class="text-sm text-slate-600">待機中</span>
+          </div>
+        </section>
+
+        <!-- 純粹 LLM / RAG 區塊（原樣保留） -->
+        <section class="grid md:grid-cols-2 gap-8 mb-10">
+            <div class="bg-gradient-to-br from-purple-50 to-indigo-100 p-6 sm:p-8 rounded-2xl shadow-xl border border-purple-200 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-3xl font-bold text-indigo-700 mb-4">🧠 純粹 LLM：憑藉「記憶」回答</h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        想像一個博學多聞的人，他所知道的一切都來自於他讀過的書、學習過的知識。純粹的 LLM 就像這樣，它回答問題的能力完全基於其龐大的訓練資料。
+                    </p>
+                    <ul class="list-disc list-inside text-lg text-gray-700 space-y-2">
+                        <li><strong class="text-indigo-600">知識來源：</strong> 僅限於訓練時所讀取的資料。</li>
+                        <li><strong class="text-indigo-600">資料更新：</strong> 若要更新知識，需要對整個模型進行昂貴且耗時的「重新訓練」。</li>
+                        <li><strong class="text-indigo-600">潛在問題：</strong> 可能會產生「幻覺」（編造不存在的事實），或無法回答關於最新事件的問題。</li>
+                    </ul>
+                </div>
+                <div class="mt-6 text-center">
+                    <img src="https://placehold.co/200x200/B0E0E6/000000?text=LLM+Brain" alt="LLM Brain Icon" class="mx-auto rounded-full shadow-md">
+                    <p class="text-sm text-gray-500 mt-2">資訊僅限於內部訓練資料</p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-green-50 to-blue-100 p-6 sm:p-8 rounded-2xl shadow-xl border border-green-200 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-3xl font-bold text-blue-700 mb-4">📚 RAG LLM：先「查資料」再回答</h3>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        而 RAG（Retrieval Augmented Generation，檢索增強生成）模型，就像一個聰明的圖書館員。當你提問時，它會先到龐大的圖書館（外部知識庫）中查找相關資料，然後再利用這些資料來組織和生成答案。
+                    </p>
+                    <ul class="list-disc list-inside text-lg text-gray-700 space-y-2">
+                        <li><strong class="text-blue-600">知識來源：</strong> 結合了模型本身的知識和即時從外部資料庫檢索到的資訊。</li>
+                        <li><strong class="text-blue-600">資料更新：</strong> 僅需更新外部知識庫的資料，無需重訓模型，方便又高效。</li>
+                        <li><strong class="text-blue-600">顯著優點：</strong> 答案更準確、時效性高，且可以提供資料來源。</li>
+                    </ul>
+                </div>
+                <div class="mt-6 text-center">
+                    <img src="https://placehold.co/200x200/C8F0E0/000000?text=RAG+Search" alt="RAG Search Icon" class="mx-auto rounded-full shadow-md">
+                    <p class="text-sm text-gray-500 mt-2">結合外部知識庫，提供即時、可追溯的答案</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- RAG 核心優點區塊（原樣保留） -->
+        <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-blue-100">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">RAG 的核心優勢與解決方案</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-yellow-50 p-6 rounded-xl shadow-md border border-yellow-200">
+                    <h4 class="text-2xl font-semibold text-yellow-700 mb-3">🚀 資料更新與效率</h4>
+                    <p class="text-lg text-gray-700">RAG 在更新資料方面具備顯著優勢。當有新的資訊出現時，我們只需要更新外部知識庫（例如文件資料庫），而不需要對整個大型語言模型進行昂貴且耗時的重新訓練。這使得 RAG 系統能夠更快速、更經濟地適應新的資訊。</p>
+                </div>
+                <div class="bg-red-50 p-6 rounded-xl shadow-md border border-red-200">
+                    <h4 class="text-2xl font-semibold text-red-700 mb-3">💡 處理「新資料」的能力</h4>
+                    <p class="text-lg text-gray-700">RAG 系統能即時檢索並整合在模型訓練後才出現的最新資訊，解決純 LLM 的時效性限制。</p>
+                </div>
+                <div class="bg-purple-50 p-6 rounded-xl shadow-md border border-purple-200">
+                    <h4 class="text-2xl font-semibold text-purple-700 mb-3">✅ 減少幻覺與準確性</h4>
+                    <p class="text-lg text-gray-700">答案基於檢索到的具體文檔，顯著降低「胡說」風險，提升可信度。</p>
+                </div>
+                <div class="bg-teal-50 p-6 rounded-xl shadow-md border border-teal-200">
+                    <h4 class="text-2xl font-semibold text-teal-700 mb-3">🔗 可追溯性與使用者信任</h4>
+                    <p class="text-lg text-gray-700">附上來源可驗證真實性，建立信任、促進學習、便於查證與糾錯。</p>
+                </div>
+                <div class="bg-orange-50 p-6 rounded-xl shadow-md border border-orange-200">
+                    <h4 class="text-2xl font-semibold text-orange-700 mb-3">💲 成本效益與領域特定化</h4>
+                    <p class="text-lg text-gray-700">維護知識庫即可擴充領域，不必每次重訓龐大模型，節省資源與時間。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心優點總結（原樣保留） -->
+        <section class="bg-blue-50 p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-blue-200 text-center">
+            <h2 class="text-3xl font-bold text-blue-700 mb-4">RAG 的核心價值：一句話總結</h2>
+            <p class="text-xl sm:text-2xl font-semibold text-gray-800 leading-relaxed">
+                RAG 透過將 LLM 的生成能力與即時、可驗證的外部知識相結合，在無需昂貴重訓的情況下，提供更<strong class="text-blue-600">準確、及時且可歸因</strong>的答案。
+            </p>
+            <p class="text-lg text-gray-600 mt-4">
+                它讓 AI 從單純的「背誦者」變成了「會查資料的思考者」。
+            </p>
+        </section>
+
+        <!-- 簡單互動區塊（原樣保留） -->
+        <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-10 border border-blue-100">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">互動體驗：模擬 AI 回答流程</h2>
+            <p class="text-lg text-gray-700 mb-6 text-center">
+                輸入一個問題，看看純粹 LLM 和 RAG LLM 會如何「回答」。（此為模擬，非實際 AI 運算）
+            </p>
+
+            <div class="max-w-3xl mx-auto">
+                <div class="mb-6">
+                    <label for="questionInput" class="block text-xl font-medium text-gray-700 mb-2">
+                        你的問題是什麼？
+                    </label>
+                    <input type="text" id="questionInput" placeholder="例如：最新的 AI 技術發展是什麼？"
+                           class="w-full p-4 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm text-lg"
+                           value="最新的 AI 技術發展是什麼？">
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 mb-8 justify-center">
+                    <button id="askPureLLM"
+                            class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                        <span class="flex items-center justify-center"><span class="text-2xl mr-2">🤔</span> 詢問純粹 LLM</span>
+                    </button>
+                    <button id="askRAGLLM"
+                            class="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                        <span class="flex items-center justify-center"><span class="text-2xl mr-2">📚</span> 詢問 RAG LLM</span>
+                    </button>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- 純粹 LLM 回答區 -->
+                    <div class="bg-purple-50 p-6 rounded-xl shadow-md border border-purple-200">
+                        <h5 class="text-2xl font-semibold text-indigo-700 mb-3 flex items-center">
+                            <span class="text-3xl mr-2">🧠</span> 純粹 LLM 的回答
+                        </h5>
+                        <div id="pureLLMResponse" class="text-lg text-gray-800 leading-relaxed italic">
+                            點擊按鈕查看回答...
+                        </div>
+                    </div>
+                    <!-- RAG LLM 回答區 -->
+                    <div class="bg-green-50 p-6 rounded-xl shadow-md border border-green-200">
+                        <h5 class="text-2xl font-semibold text-blue-700 mb-3 flex items-center">
+                            <span class="text-3xl mr-2">📚</span> RAG LLM 的回答
+                        </h5>
+                        <div id="ragLLMResponse" class="text-lg text-gray-800 leading-relaxed italic">
+                            點擊按鈕查看回答...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 頁腳 -->
+        <footer class="text-center text-gray-500 text-sm mt-10 p-4">
+            <p>&copy; 2025 AI 技術解析。保留所有權利。</p>
+        </footer>
+    </div>
+
+    <script>
+        // 獲取 DOM 元素
+        const questionInput = document.getElementById('questionInput');
+        const askPureLLMButton = document.getElementById('askPureLLM');
+        const askRAGLLMButton = document.getElementById('askRAGLLM');
+        const pureLLMResponseDiv = document.getElementById('pureLLMResponse');
+        const ragLLMResponseDiv = document.getElementById('ragLLMResponse');
+
+        // 定義模擬回答
+        const simulatedResponses = {
+            "最新的 AI 技術發展是什麼？": {
+                pureLLM: "人工智慧的發展一直非常迅速，它涵蓋了機器學習、深度學習、自然語言處理、電腦視覺等多個領域。近年來，大型語言模型（LLM）的進步尤為顯著，它們能夠理解並生成人類語言，在多種任務中展現出驚人的能力。此外，強化學習、生成對抗網路（GANs）等技術也在不斷演進，推動著AI在各行各業的應用和創新。",
+                ragLLM: "最新的 AI 技術發展包括多模態 AI 的進步，例如能夠理解和生成文字、圖像、音訊的 Gemini 模型。此外，RAG（檢索增強生成）技術正被廣泛應用，以提高 LLM 的準確性和時效性，解決其『幻覺』問題。在業界，Edge AI 和可解釋性 AI (XAI) 也越來越受到關注，以實現更高效和透明的 AI 部署。 [來源: AI 領域最新研究報告 2024, 科技趨勢週刊 June 2025]"
+            },
+            "地球離太陽有多遠？": {
+                pureLLM: "地球距離太陽大約是 1.5 億公里，這個距離會隨著地球繞太陽公轉的橢圓軌道而略有變化。這是天文學上一個非常重要的數值。",
+                ragLLM: "地球與太陽的平均距離約為 1.496 億公里（即 9300 萬英里），這個距離通常被定義為一個天文單位（AU）。在近日點時，距離約為 1.47 億公里；在遠日點時，距離約為 1.52 億公里。 [來源: NASA 天文資料庫, 國家地理雜誌]"
+            },
+            "幫我規劃一個台灣三天兩夜的行程": {
+                pureLLM: "台灣三天兩夜的行程可以很豐富。第一天可以安排台北市區觀光，參觀故宮、台北101。第二天可以考慮去九份或淡水，體驗台灣的自然風光和歷史文化。第三天則可以在台北市區購物，然後準備返程。",
+                ragLLM: "針對台灣三天兩夜行程，建議如下：\n\n<strong class='text-blue-600'>第一天：台北都會探索與文化巡禮</strong>\n上午：抵達桃園機場，搭乘捷運至台北市區，入住飯店。\n下午：參觀<a href='https://www.npm.gov.tw/' target='_blank' class='text-blue-500 hover:underline'>國立故宮博物院</a>，欣賞中華文化瑰寶。\n傍晚：前往<a href='https://www.taipei-101.com.tw/tw/' target='_blank' class='text-blue-500 hover:underline'>台北101</a>觀景台，俯瞰城市夜景。\n晚餐：在信義區享用美食，體驗夜生活。\n\n<strong class='text-blue-600'>第二天：北海岸風情與懷舊小鎮</strong>\n上午：搭乘巴士前往<a href='https://newtaipei.travel/zh-tw/attractions/detail/109040' target='_blank' class='text-blue-500 hover:underline'>野柳地質公園</a>，欣賞奇特的海蝕地形。\n下午：轉往<a href='https://newtaipei.travel/zh-tw/attractions/detail/109002' target='_blank' class='text-blue-500 hover:underline'>九份老街</a>，感受山城懷舊氛圍，品嚐芋圓。\n傍晚：返回台北，可在饒河街夜市或士林夜市品嚐台灣小吃。\n\n<strong class='text-blue-600'>第三天：歷史文化與悠閒購物</strong>\n上午：參觀<a href='https://www.cksmh.gov.tw/' target='_blank' class='text-blue-500 hover:underline'>中正紀念堂</a>，了解台灣歷史。\n下午：前往西門町或東區進行購物，體驗年輕潮流文化。\n傍晚：依班機時間前往機場，結束旅程。\n\n[來源: 交通部觀光署台灣觀光資訊網, Lonely Planet 台灣旅遊指南]"
+            }
+            // 可增加更多問題
+        };
+
+        // 監聽按鈕點擊事件
+        askPureLLMButton.addEventListener('click', () => {
+            const question = questionInput.value.trim();
+            if (question === "") {
+                pureLLMResponseDiv.innerHTML = "<p class='text-red-500'>請輸入一個問題！</p>";
+                ragLLMResponseDiv.innerHTML = "<p class='text-red-500'>請輸入一個問題！</p>";
+                return;
+            }
+            const responseData = simulatedResponses[question] || simulatedResponses["最新的 AI 技術發展是什麼？"];
+            pureLLMResponseDiv.innerHTML = `<p>${responseData.pureLLM}</p>`;
+            ragLLMResponseDiv.innerHTML = `<p class='italic text-gray-500'>點擊右側按鈕查看 RAG 回答</p>`;
+        });
+
+        askRAGLLMButton.addEventListener('click', () => {
+            const question = questionInput.value.trim();
+            if (question === "") {
+                pureLLMResponseDiv.innerHTML = "<p class='text-red-500'>請輸入一個問題！</p>";
+                ragLLMResponseDiv.innerHTML = "<p class='text-red-500'>請輸入一個問題！</p>";
+                return;
+            }
+            const responseData = simulatedResponses[question] || simulatedResponses["最新的 AI 技術發展是什麼？"];
+            ragLLMResponseDiv.innerHTML = `<p>${responseData.ragLLM}</p>`;
+            pureLLMResponseDiv.innerHTML = `<p class='italic text-gray-500'>點擊左側按鈕查看純粹 LLM 回答</p>`;
+        });
+
+        // 初始化時顯示預設回答
+        window.onload = () => {
+            const defaultQuestion = questionInput.value;
+            const responseData = simulatedResponses[defaultQuestion];
+            pureLLMResponseDiv.innerHTML = `<p>${responseData.pureLLM}</p>`;
+            ragLLMResponseDiv.innerHTML = `<p>${responseData.ragLLM}</p>`;
+        };
+
+        // 新增：OTA 進度條示意（不影響原架構）
+        const otaBtn = document.getElementById('otaBtn');
+        const otaBar = document.getElementById('otaBar');
+        const otaText = document.getElementById('otaText');
+        if (otaBtn && otaBar && otaText) {
+          otaBtn.addEventListener('click', () => {
+            otaBar.style.width = '0%';
+            otaText.textContent = '索引更新中…';
+            let p = 0;
+            const timer = setInterval(() => {
+              p += Math.random() * 18;
+              if (p >= 100) {
+                p = 100;
+                clearInterval(timer);
+                otaText.textContent = '完成！新知已可引用';
+              }
+              otaBar.style.width = p + '%';
+            }, 180);
+          });
+        }
+    </script>
+</body>
+</html>
